@@ -490,12 +490,12 @@ def out(command):
 
 def get_powerplans(currentcheck=False):
     pplans={}
-    for powerplan in out("powercfg -List").split("\n")[2:]:
-        if "Scheme" in powerplan.split():
+    for powerplan in out("powercfg -List").split("\n"):
+        if ":" in powerplan:
             ParsedData = powerplan.split(":")[1].split()
             the_data = (ParsedData[0])
             plan_name = (" ".join(ParsedData[1:]))
-    
+
             if "*" in plan_name:
                 plan_name = plan_name[plan_name.find("(") + 1: plan_name.find(")")]
                 pplans[plan_name]=the_data
@@ -688,7 +688,9 @@ def get_size(bytes, suffix="B"):
         bytes /= factor
 
 def getDriveName(driveletter):
-    return subprocess.check_output(["cmd","/c vol "+driveletter]).decode().split("\r\n")[0]
+    systemencoding = windll.kernel32.GetConsoleOutputCP()
+    systemencoding= f"cp{systemencoding}"
+    return subprocess.check_output(["cmd","/c vol "+driveletter]).decode(systemencoding).split("\r\n")[0]
 
 ## NOT TO BE CONFUSED WITH UPLOAD / DOWNLOAD SPEED
 def network_usage():
@@ -797,13 +799,20 @@ def AudioDeviceCmdlets(command, output=True):
 import sounddevice as sd
 import audio2numpy as a2n
 import pyttsx3
+
+def getAllVoices():
+    engine = pyttsx3.init()
+    return engine.getProperty("voices")
+
 def TextToSpeech(message, voicesChoics, volume=100, rate=100, output="Default"):
     engine = pyttsx3.init()
     voices = engine.getProperty('voices')
-    print(voices)
     engine.setProperty("volume", volume/100)
     engine.setProperty("rate", rate)
-    engine.setProperty('voice', voices[1].id if voicesChoics == "Female" else voices[2].id)
+    for voice in getAllVoices():
+        if voice.name == voicesChoics:
+            engine.setProperty('voice', voice.id)
+            print("Using", voice.name, "voices", voice)
 
     if output =="Default":
         try:
@@ -825,9 +834,7 @@ def TextToSpeech(message, voicesChoics, volume=100, rate=100, output="Default"):
             sd.play(x, sr, blocking=True)
         except Exception as e:
             print("test", e)
-            
-        
-        
+
 def activate_windows_setting(choice=False):
     
     settings ={

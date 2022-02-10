@@ -1,25 +1,22 @@
-import json
-import os
+from re import I
 import sys
 import threading
-import time
 from time import sleep
 
 ### Gitago Imports
 import mss
 import mss.tools
-import psutil
-import pyautogui
 import pygetwindow
 import pythoncom
 import schedule
 import TouchPortalAPI
-from PIL import Image
 from pycaw.pycaw import AudioUtilities
 from TouchPortalAPI import TYPES
 from screeninfo import get_monitors
 
 from utils.util import *
+############
+
 
 
 def run_continuously(interval=1):
@@ -60,7 +57,7 @@ def vd_check():
     TPClient.choiceUpdate("KillerBOSS.TP.Plugins.virtualdesktop.actionchoice", vdlist)
         
         
-        ## should we bother checking old IP info to new to see if its different before we update states?
+## should we bother checking old IP info to new to see if its different before we update states?
 def get_ip_loop():
     try:
         pub_ip =get_ip_details("choice1")  
@@ -82,10 +79,7 @@ def disk_usage(drives=False):
             the_partition = partition.device.split(":")
             driveletter = (the_partition[0])       
             if not drives:
-                #print(f"=== Device: {partition.device} ===")
-                #print("NOT DRIVES")
-                # print(f"  Mountpoint: {partition.mountpoint}")
-                #print(f"  File system type: {partition.fstype}")
+    
                 the_partition = partition.device.split(":")
                 drive_name = getDriveName(the_partition[:1][0]+":")
                 print(getDriveName(the_partition[:1][0]+":"))
@@ -316,12 +310,12 @@ def updateStates():
                                 global_states.remove(x)
                             print("exception at 293", e)
                             pass
-                    
+            #print(global_states)
             for x in global_states:
                 try:
                     appVolume = str(int(AudioController(x).process_volume()*100))
                     TPClient.stateUpdate(f'KillerBOSS.TP.Plugins.VolumeMixer.CreateState.{x}', appVolume)
-                    TPClient.stateUpdate(f'KillerBOSS.TP.Plugins.VolumeMixer.CreateState.{x}.muteState', str(bool(AudioController(x).getMuteState())))
+                   # TPClient.stateUpdate(f'KillerBOSS.TP.Plugins.VolumeMixer.CreateState.{x}.muteState', str(bool(AudioController(x).getMuteState())))
                     TPClient.send(
                     {
                         "type":"connectorUpdate",
@@ -378,7 +372,8 @@ def updateStates():
                 pass     
             except UnicodeDecodeError as err:
                 print("Unicode Decode Error: ", err)
-                   
+            voices = [voice.name for voice in getAllVoices()]
+            TPClient.choiceUpdate("KillerBOSS.TP.Plugins.TextToSpeech.voices", voices)
         
         # try:
         #     currentActiveWindowIco = extract_icon.extractIco(getActiveExecutablePath())
@@ -401,10 +396,6 @@ updateStates()
 def onStart(data):
     if settings := data.get('settings'):
         handleSettings(settings, False)
-        
-    ### making this trigger every 1 seconds forever...
-    ##happening in handleSettings intead...
-    #schedule.every(1).seconds.do(timebooted_loop)
      
     ### Getting Power Plan Details and Updating States and Choices
     pplans = get_powerplans()
@@ -443,9 +434,10 @@ def handleSettings(settings, on_connect=False):
     time.sleep(2)
 
     for scheduleFunc in [(disk_usage, "Update Interval: Hard Drive"),
-                         (vd_check, "Update Interval: Network Up/Down(INCOMPLETE)"),
+                         (vd_check, "Update Interval: Active Virtual Desktops"),
                          (check_number_of_monitors, "Update Interval: Active Monitors"),
-                         (get_windows_update, "Update Interval: Active Windows")]:
+                         (get_windows_update, "Update Interval: Active Windows"),
+                         (get_ip_loop, "Update Interval: Public IP")]:
         interval = float(newsettings[scheduleFunc[1]])
         
         if int(newsettings[scheduleFunc[1]]) > 0:
@@ -455,7 +447,6 @@ def handleSettings(settings, on_connect=False):
             print(f"{scheduleFunc[1]} is TURNED OFF")
     
     ### mandatory loops....
-    schedule.every(5).minutes.do(get_ip_loop)
     schedule.every(1).seconds.do(timebooted_loop)
     ## Starting Back Up
     stop_run_continuously = run_continuously()
@@ -681,13 +672,11 @@ def listChangeAction(data):
             pass
         
     if data['actionId'] == 'KillerBOSS.TP.Plugins.screencapture.window.clipboard':
-
         pass
 
 @TPClient.on(TYPES.onConnectorChange)
 def connectors(data):
     print(data)
-    import os
     if data['connectorId'] == "KillerBOSS.TP.Plugins.VolumeMixer.connectors.APPcontrol":
         if data['data'][0]['value'] == "Master Volume" :
             setMasterVolume(data['value'])

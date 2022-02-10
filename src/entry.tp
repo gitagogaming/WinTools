@@ -867,11 +867,8 @@
             "id": "KillerBOSS.TP.Plugins.TextToSpeech.voices",
             "type": "choice",
             "label": "choice",
-            "default": "Male",
-            "valueChoices": [
-              "Female",
-              "Male"
-            ]
+            "default": "",
+            "valueChoices": []
           },
           {
             "id": "KillerBOSS.TP.Plugins.TextToSpeech.text",
@@ -994,7 +991,7 @@
   ],
   "settings": [
     {
-      "name": "Update Interval: Network Up/Down(INCOMPLETE)",
+      "name": "Update Interval: Public IP",
       "type": "number",
       "default": "0",
       "maxValue": 1800,
@@ -1025,7 +1022,7 @@
       "type": "number",
       "default": "10",
       "maxValue": 1800,
-      "minValue": 5,
+      "minValue": 0,
       "allowDecimals": false,
       "readOnly": false
     },
@@ -1034,7 +1031,7 @@
       "type": "number",
       "default": "15",
       "maxValue": 1800,
-      "minValue": 5,
+      "minValue": 0,
       "allowDecimals": false,
       "readOnly": false
     }

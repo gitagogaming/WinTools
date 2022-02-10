@@ -47,6 +47,7 @@ def run_continuously(interval=1):
 def timebooted_loop():
     TPClient.stateUpdate("KillerBOSS.TP.Plugins.Windows.livetime", str(time_booted()))
 
+
 def vd_check():
     vdlist=[]
     virtual_desk_count = len(get_virtual_desktops())
@@ -68,31 +69,23 @@ def get_ip_loop():
 
 def disk_usage(drives=False):
     # Disk Information
-    # get all disk partitions
     try:
         partitions = psutil.disk_partitions()
-
-        def getDriveName(driveletter):
-            return subprocess.check_output(["cmd","/c vol "+driveletter]).decode().split("\r\n")[0]
         drives = False
         for partition in partitions:
             the_partition = partition.device.split(":")
-            driveletter = (the_partition[0])       
+            driveletter = (the_partition[0])
+                   
             if not drives:
-    
                 the_partition = partition.device.split(":")
-                drive_name = getDriveName(the_partition[:1][0]+":")
-                print(getDriveName(the_partition[:1][0]+":"))
-                drive_name_replaced = drive_name.replace(f"Volume in drive {the_partition[:1][0]} is", "")
-                if drive_name.endswith("has no label."):
-                    drive_name_replaced = partition.mountpoint
+                drive_name = getDriveName(driveletter)
+
                 try:
                     partition_usage = psutil.disk_usage(partition.mountpoint)
                 except PermissionError as e:
-                            # this can be catched due to the disk that
-                            # isn't ready
-                    print("Permission error " + e)
+                    print("Permission error " + e)   # this can be catched due to the disk that  isn't ready
                     continue
+                
                 freespace = get_size(partition_usage.free).replace("GB","")
                 usedspace = get_size(partition_usage.used).replace("GB","")
 
@@ -132,7 +125,7 @@ def disk_usage(drives=False):
                 TPClient.stateUpdateMany([
                 {
                     "id": f'KillerBOSS.TP.Plugins.Windows.drive.letter_{driveletter}',
-                    "value": drive_name_replaced
+                    "value": drive_name
                 },
                 {
                     "id": f'KillerBOSS.TP.Plugins.Windows.drive.size_{driveletter}',

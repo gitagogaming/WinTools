@@ -687,10 +687,36 @@ def get_size(bytes, suffix="B"):
             return f"{bytes:.2f}{unit}{suffix}"
         bytes /= factor
 
+#def getDriveName(driveletter):
+#    systemencoding = windll.kernel32.GetConsoleOutputCP()
+#    systemencoding= f"cp{systemencoding}"
+#    return subprocess.check_output(["cmd","/c vol "+driveletter]).decode(systemencoding).split("\r\n")[0]
+
+
+from ctypes import windll, create_unicode_buffer, c_wchar_p, sizeof
+from string import ascii_uppercase
+
 def getDriveName(driveletter):
-    systemencoding = windll.kernel32.GetConsoleOutputCP()
-    systemencoding= f"cp{systemencoding}"
-    return subprocess.check_output(["cmd","/c vol "+driveletter]).decode(systemencoding).split("\r\n")[0]
+    driveletter1 = driveletter+":/"
+    volumeNameBuffer = create_unicode_buffer(1024)
+    fileSystemNameBuffer = create_unicode_buffer(1024)
+    serial_number = None
+    max_component_length = None
+    file_system_flags = None
+    drive_names = []
+    rc = windll.kernel32.GetVolumeInformationW(c_wchar_p(driveletter1), volumeNameBuffer, sizeof(volumeNameBuffer),
+                                                serial_number, max_component_length, file_system_flags,
+                                                fileSystemNameBuffer, sizeof(fileSystemNameBuffer))
+    if rc:
+        drive_names.append(f'{volumeNameBuffer.value}({driveletter1[:2]})')  # disk_name(C:)
+    if volumeNameBuffer.value:
+        return volumeNameBuffer.value
+    else:
+        return "No Name"
+
+
+
+
 
 ## NOT TO BE CONFUSED WITH UPLOAD / DOWNLOAD SPEED
 def network_usage():
